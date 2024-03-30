@@ -1,0 +1,1 @@
+Uso de Streamlit para probar un modelo de RAG con la API de OpenAI y LangChain.
