@@ -84,6 +84,9 @@ if uploaded_file and question:
                     stop= str(key_points + 1) + ".",  # Ajusta los delimitadores de parada según sea necesario
                     temperature=0.5,  # Ajusta la creatividad según sea necesario, mientras más alto más creativo
                     )
+                
+                # Extraer las secciones del texto
+                secciones = extraer_secciones_del_texto(response.choices[0].message.content)
 
                 #  # Aquí puedes permitir al usuario realizar búsquedas en el documento o simplemente procesar todo el texto.
                 # query = st.text_input("Ask something about the article", placeholder="E.g., main findings of the paper.")
@@ -91,6 +94,14 @@ if uploaded_file and question:
                 #     docs = faiss_index.similarity_search(query, k=2)
                 #     for doc in docs:
                 #         st.write(f"Page {doc.metadata['page']}:", doc.page_content[:300])
+
+                # Mostrar la respuesta
+                st.write("### Answer")
+
+                # Mostrar las secciones en un desplegable
+                for numero, seccion in enumerate(secciones):
+                    with st.expander(f"#{numero + 1}. {seccion['titulo']}"):
+                        st.write(seccion['pagina'])
                     
             except Exception as e:
                 st.error(f"Failed to process PDF: {e}")
@@ -101,7 +112,10 @@ if uploaded_file and question:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",  # Asegúrate de que el nombre del modelo esté correctamente especificado aquí
             messages=[
-            {"role":"system", "content": f"You are an expert making paper summaries. After reading an article, you can provide a summary by listing {key_points} of the key points. You will receive extra info from the user. The summary should be concise and formatted as a numbered list. The answer is in spanish."},
+           {"role":"system", "content": f"You are an expert making paper summaries. After reading an article, provide a summary by listing {key_points} of the key points. You will receive a question from the user, \
+                                give a lot of importance to this question but always looking for the response in the paper. \
+                                The summary should be concise and formatted as a numbered list. The answer is in spanish. Also give the user in the end of an\
+                    item of the numerated list in which page the information was found, with the format of just the number of the page en the end of the item. Give just enumerated list, not intro or conclusion."},
             {"role":"user", "content": f"Here's a paper:\n\n{article}\n\Aditional info: {question}"}
             ],
             max_tokens=1000,  # Estos son los tokens de texto de salida máximos
@@ -109,20 +123,8 @@ if uploaded_file and question:
             temperature=0.5,  # Ajusta la creatividad según sea necesario
         )
         
-# Mostrar la respuesta
-st.write("### Answer")
+        # Mostrar la respuesta
+        st.write("### Answer")
 
-# Extraer las secciones del texto
-secciones = extraer_secciones_del_texto(response.choices[0].message.content)
-
-# Mostrar las secciones en un desplegable
-for numero, seccion in enumerate(secciones):
-    with st.expander(f"#{numero + 1}. {seccion['titulo']}"):
-        st.write(seccion['pagina'])
-    
-    
-
-
-    # La respuesta es un string que contiene una lista enumerada, colocamos cada elemento en un desplegable de streamlit
-    # al hacer click en el desplegable se muestra la pagina en la que se encuentra la informacion
-    # st.write(secciones)
+        # Mostrar las secciones en un desplegable
+        st.write(response.choices[0].message.content)
